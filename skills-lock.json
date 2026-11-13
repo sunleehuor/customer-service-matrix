@@ -24,6 +24,12 @@
       "sourceType": "github",
       "skillPath": "plugins/tanstack-query/skills/tanstack-query/SKILL.md",
       "computedHash": "b27696896a18acff7cb9099d753effb74bdf4b4339881f941fea4cca56abb1fa"
+    },
+    "tanstack-virtual": {
+      "source": "tanstack-skills/tanstack-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/tanstack-virtual/skills/tanstack-virtual/SKILL.md",
+      "computedHash": "e322b98ce04e6e5d206ef041b0b16078d26506c98f38ba565e553925c3da9bc5"
     }
   }
 }
