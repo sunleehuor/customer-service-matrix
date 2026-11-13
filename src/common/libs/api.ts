@@ -1,14 +1,9 @@
-
-import axios, {
-  AxiosError,
-  type InternalAxiosRequestConfig,
-} from "axios";
+import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 
 const baseURL = import.meta.env.VITE_API_URL;
-if(!baseURL) {
-    throw new Error('VITE_API_URL is missing');
+if (!baseURL) {
+  throw new Error("VITE_API_URL is missing");
 }
-
 
 const api = axios.create({
   baseURL,
@@ -35,7 +30,7 @@ api.interceptors.request.use(
   },
   (error: AxiosError) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // Response interceptor
@@ -76,7 +71,7 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;
