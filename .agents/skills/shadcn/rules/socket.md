@@ -1,0 +1,3 @@
+# Socket
+
+SUSPICIOUS. The skill’s purpose largely matches its capabilities and it relies on the official shadcn CLI, so it is not malware. However, it contains load-time pre-execution, mutable `@latest` package execution, and explicit support for installing third-party registry/GitHub content into the project, which makes the trust footprint broader than a pure documentation skill and raises medium supply-chain risk.
