@@ -1,5 +1,5 @@
-import AboutPage from '@/pages/about-page.vue'
-import HomePage from '@/pages/home-page.vue'
+import AboutPage from '@/pages/AboutPage.vue'
+import HomePage from '@/pages/HomePage.vue'
 import { createMemoryHistory, createRouter, type RouteRecordRaw } from 'vue-router'
 
 const routes: Readonly<RouteRecordRaw[]> = [
