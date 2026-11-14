@@ -1,6 +1,7 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
+import { VITE_API_URL } from "./env";
 
-const baseURL = import.meta.env.VITE_API_URL;
+const baseURL = VITE_API_URL;
 if (!baseURL) {
   throw new Error("VITE_API_URL is missing");
 }

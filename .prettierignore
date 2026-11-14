@@ -1,3 +1,4 @@
 node_modules/
 dist/
 .agents/
+src/common/locales/

@@ -11,5 +11,5 @@
 
 <template>
   <h1 class="text-red-600">Hello</h1>
-  <Button> Hello </Button>
+  <Button> {{ $t("welcome.hello") }} </Button>
 </template>
