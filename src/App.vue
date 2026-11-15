@@ -1,11 +1,11 @@
 <script setup lang="ts">
-  import I18nProvider from "./common/providers/I18nProvider.vue";
+import ProviderWrapper from "./common/providers/ProviderWrapper.vue";
 </script>
 
 <template>
-  <I18nProvider>
-    <main>
-      <RouterView />
-    </main>
-  </I18nProvider>
+	<ProviderWrapper>
+		<main>
+			<RouterView />
+		</main>
+	</ProviderWrapper>
 </template>
