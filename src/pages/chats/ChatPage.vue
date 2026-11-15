@@ -26,7 +26,7 @@ import {
 } from "@/common/libs/matrix/matrix";
 import {
 	getNextRoomTimeLineEvents,
-	getRoomTimeLineEvents
+	getRoomTimeLineEvents,
 } from "@/common/libs/matrix/matrix-message";
 import { autoJoinRoom, getRoomById } from "@/common/libs/matrix/matrix-room";
 import VirtualList from "@/components/VirtualList.vue";
@@ -71,7 +71,6 @@ const handleRoomTimeLine = async (
 	event: MatrixEvent,
 	room: Room | undefined,
 	toStartOfTimeline: boolean | undefined,
-	_: boolean | undefined, // removed
 ) => {
 	if (toStartOfTimeline) return;
 	if (!room || !event) return;

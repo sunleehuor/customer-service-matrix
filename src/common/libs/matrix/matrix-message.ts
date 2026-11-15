@@ -3,7 +3,7 @@ import {
 	type IEvent,
 	type MatrixClient,
 	type MatrixEvent,
-	type Room
+	type Room,
 } from "matrix-js-sdk";
 
 export function getRoomTimeLineEvents(room: Room): MatrixEvent[] {
@@ -37,8 +37,8 @@ export async function getRoomEventByIdFromServer(
 	room: Room,
 	eventId: string,
 	options?: {
-		AbortSignal: AbortSignal
-	}
+		AbortSignal: AbortSignal;
+	},
 ): Promise<MatrixEvent | undefined> {
 	try {
 		const path = `/rooms/${decodeURIComponent(room.roomId)}/event/${decodeURIComponent(eventId)}`;
@@ -48,8 +48,8 @@ export async function getRoomEventByIdFromServer(
 			undefined,
 			undefined,
 			{
-				abortSignal: options?.AbortSignal
-			}
+				abortSignal: options?.AbortSignal,
+			},
 		)) as Partial<IEvent>;
 		const event = client.getEventMapper()(raw);
 		return event;
