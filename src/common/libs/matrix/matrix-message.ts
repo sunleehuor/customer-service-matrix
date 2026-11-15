@@ -6,6 +6,8 @@ import {
 	type Room,
 } from "matrix-js-sdk";
 
+export type TimelinePaginationDirection = "oldest" | "newest";
+
 export function getRoomTimeLineEvents(room: Room): MatrixEvent[] {
 	try {
 		return room?.getLiveTimeline().getEvents() ?? [];
@@ -14,22 +16,33 @@ export function getRoomTimeLineEvents(room: Room): MatrixEvent[] {
 	}
 }
 
+export async function paginateRoomTimeline(
+	client: MatrixClient,
+	room: Room,
+	direction: TimelinePaginationDirection = "oldest",
+	limit = 30,
+): Promise<boolean> {
+	const timeline = room.getLiveTimeline();
+	const backwards = direction === "oldest";
+	try {
+		return (
+			(await client.paginateEventTimeline(timeline, {
+				backwards,
+				limit,
+			})) ?? false
+		);
+	} catch (error) {
+		console.error(`Failed to paginate room timeline (${direction}):`, error);
+		return false;
+	}
+}
+
 export async function getNextRoomTimeLineEvents(
 	client: MatrixClient,
 	room: Room,
+	limit = 30,
 ): Promise<boolean> {
-	try {
-		const timeline = room.getLiveTimeline();
-		return (
-			(await client.paginateEventTimeline(timeline, {
-				backwards: true,
-				limit: 30,
-			})) ?? []
-		);
-	} catch (e) {
-		console.log(e);
-		throw e;
-	}
+	return paginateRoomTimeline(client, room, "oldest", limit);
 }
 
 export async function getRoomEventByIdFromServer(
