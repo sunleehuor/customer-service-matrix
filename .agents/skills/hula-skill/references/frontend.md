@@ -1,281 +1,114 @@
-# Frontend Guide (hula)
+# Frontend Engineering Guide
 
-## Stack
+**Project**: Matrix Customer Service (`matrix-customer-service-vite`)  
+**Standard**: Vue 3 + TypeScript Strict Engineering Guidelines
 
-- Vue 3 Composition API with `<script setup>`
-- Vite 7 + TypeScript 5.8
-- Pinia 3 for global state
-- UnoCSS for utility styling
-- Naive UI (desktop), Vant (mobile)
-- vue-i18n for translations
-- matrix-js-sdk ^37.0.0 for Matrix protocol
+---
 
-## File Placement
+## 1. Single-File Component (SFC) Standards
 
-| Type | Desktop | Mobile |
-|------|---------|--------|
-| Views | `src/views/` | `src/mobile/views/` |
-| Components | `src/components/` | `src/mobile/components/` |
-| Layouts | `src/layout/` | `src/mobile/layout/` |
-| Routes | `src/router/index.ts` | Same file (platform detection) |
+### 1.1 Script Setup as Standard
+All Single-File Components must use `<script setup lang="ts">`. Options API or `defineComponent` wrapper syntax without `<script setup>` is prohibited.
 
-### Services
+### 1.2 Component Section Ordering
+SFC sections must strictly follow this order:
+1. `<script setup lang="ts">`
+2. `<template>`
+3. `<style scoped>` (Prefer Tailwind CSS utilities over custom scoped styles)
 
-| Directory | Purpose |
-|-----------|---------|
-| `src/services/matrix/` | Matrix SDK wrappers (25+ services) |
-| `src/services/offline/` | Offline support |
-| `src/services/openclaw/` | OpenClaw AI integration |
-
-### Other Directories
-
-| Directory | Purpose |
-|-----------|---------|
-| `src/stores/` | Pinia stores |
-| `src/hooks/` | Vue composables |
-| `src/utils/` | Utility functions |
-| `src/enums/` | TypeScript enums |
-| `src/types/` | TypeScript type definitions |
-
-## Matrix Services Architecture
-
-hula wraps matrix-js-sdk through service classes in `src/services/matrix/`:
-
-```
-src/services/matrix/
-├── MatrixClientService.ts      # Client lifecycle
-├── MatrixRoomService.ts        # Room management
-├── MatrixEventService.ts       # Event/message handling
-├── MatrixCryptoService.ts      # Crypto operations
-├── MatrixMediaService.ts       # Media upload/download
-├── MatrixAccountService.ts     # Account management
-├── MatrixReactionService.ts    # Message reactions
-├── MatrixForwardService.ts     # Message forwarding
-├── MatrixSearchService.ts      # Search functionality
-├── MatrixReceiptService.ts     # Read receipts
-├── MatrixTypingService.ts      # Typing indicators
-├── MatrixMessageRelationService.ts  # Edits/replies/threads
-├── MatrixThreadService.ts      # Thread management
-├── MatrixEncryptionService.ts  # E2EE management
-├── MatrixMultimediaService.ts  # Voice/image/video
-├── MatrixSpaceService.ts       # Spaces
-├── MatrixVoIPService.ts        # Voice/video calls
-├── MatrixNotificationService.ts # Push rules
-├── MatrixLocationService.ts    # Location sharing
-├── MatrixPollService.ts        # Polls
-├── MatrixFriendService.ts      # Friend system
-├── MatrixDirectMessageService.ts # DM management
-├── MatrixVoiceService.ts       # Voice messages
-├── MatrixModerationService.ts  # Moderation
-├── MatrixPushService.ts        # Push notifications
-├── MatrixQuotaService.ts       # Quota management
-└── index.ts                    # Exports
-```
-
-### Service Pattern
-
-```typescript
-class MatrixXxxService {
-  private client: MatrixClient | null = null
-
-  setClient(client: MatrixClient | null): void {
-    this.client = client
-  }
-
-  async someMethod(): Promise<Result> {
-    const client = this.getClient()
-    return client.xxx()
-  }
-
-  private getClient(): MatrixClient {
-    if (!this.client) {
-      throw new Error('[MatrixXxx] 客户端未初始化')
-    }
-    return this.client
-  }
-}
-
-export const matrixXxxService = new MatrixXxxService()
-```
-
-## Pinia Patterns
-
-### Setup Store Style
-
-```typescript
-import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import { StoresEnum } from '@/enums'
-
-export const useUserStore = defineStore(StoresEnum.USER, () => {
-  const userInfo = ref<UserInfo | null>(null)
-  const isLoading = ref(false)
-
-  const isLoggedIn = computed(() => !!userInfo.value)
-
-  async function login(username: string, password: string): Promise<boolean> {
-    isLoading.value = true
-    try {
-      const result = await matrixClientService.login(username, password)
-      if (result.success) {
-        userInfo.value = { userId: result.userId! }
-        return true
-      }
-      return false
-    } finally {
-      isLoading.value = false
-    }
-  }
-
-  return {
-    userInfo,
-    isLoading,
-    isLoggedIn,
-    login
-  }
-})
-```
-
-### Using Stores in Components
-
-```typescript
-import { storeToRefs } from 'pinia'
-import { useUserStore } from '@/stores/user'
-
-const userStore = useUserStore()
-const { userInfo, isLoading } = storeToRefs(userStore)
-const { login } = userStore
-```
-
-## Component Structure
+### 1.3 Strict Type-Driven Props and Emits
+- Always use TypeScript type definitions inside `defineProps<Props>()` and `defineEmits<Emits>()`.
+- Do not use runtime array syntax (e.g. `defineProps(['title'])`).
+- Supply default values with `withDefaults(...)`.
 
 ```vue
-<template>
-  <div class="component-name">
-    <!-- Template content -->
-  </div>
-</template>
-
+<!-- ✅ RECOMMENDED COMPONENT STRUCTURE -->
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useUserStore } from '@/stores/user'
+  import { computed } from "vue";
+  import { Button } from "@/components/ui/button";
 
-defineOptions({
-  name: 'ComponentName'
-})
+  interface Props {
+    title: string;
+    count?: number;
+  }
 
-const props = defineProps<{
-  roomId: string
-}>()
+  const props = withDefaults(defineProps<Props>(), {
+    count: 0,
+  });
 
-const emit = defineEmits<{
-  (e: 'close'): void
-  (e: 'send', message: string): void
-}>()
+  const emit = defineEmits<{
+    (e: "update", value: number): void;
+    (e: "close"): void;
+  }>();
 
-const loading = ref(false)
-const message = ref('')
-
-const displayName = computed(() => props.roomId)
-
-function handleSubmit(): void {
-  emit('send', message.value)
-}
-
-onMounted(() => {
-  // Initialization
-})
+  const formattedTitle = computed(() => props.title.trim());
 </script>
 
-<style scoped>
-/* Styles */
-</style>
+<template>
+  <div class="rounded-md border p-4">
+    <h2 class="text-lg font-semibold">{{ formattedTitle }}</h2>
+    <Button @click="emit('update', props.count + 1)">Increment</Button>
+  </div>
+</template>
 ```
 
-## Platform Detection
+---
 
-```typescript
-import { computed } from 'vue'
+## 2. ESLint & Prettier Formatting Rules
 
-export function usePlatform() {
-  const isDesktop = computed(() => window.__TAURI__ !== undefined)
-  const isMobile = computed(() => !isDesktop.value && /Mobi|Android/i.test(navigator.userAgent))
+Formatting is strictly governed by `.prettierrc` and ESLint 9 Flat Config:
 
-  return {
-    isDesktop,
-    isMobile,
-    platform: isDesktop.value ? 'desktop' : 'mobile'
-  }
-}
+| Rule | Setting | Enforcement |
+| :--- | :--- | :--- |
+| **`semi`** | `true` | Semicolons are required at end of statements. |
+| **`singleQuote`** | `false` | **Double quotes (`"..."`)** must be used for JS/TS strings. Single quotes are prohibited. |
+| **`tabWidth`** | `2` | Indentation must be **2 spaces**. Tabs (`useTabs: false`) are forbidden. |
+| **`trailingComma`** | `"all"` | Trailing commas required in multi-line objects/arrays/args. |
+| **`printWidth`** | `80` | Wrap lines at 80 characters. |
+| **`vueIndentScriptAndStyle`** | `true` | Content inside `<script>` and `<style>` in `.vue` files **must be indented by 2 spaces**. |
+
+---
+
+## 3. TypeScript Rules
+
+- **Zero `any`**: Do not use `any`. Use `unknown` with type narrowing (e.g., `typeof`, `instanceof`) or declare explicit TypeScript interfaces.
+- **Interface vs Type**:
+  - Use `interface` for object models, DTOs, entity definitions, and component prop definitions.
+  - Use `type` for unions, primitives, intersections, tuple types, or utility transformations.
+- **Explicit Return Types**: All public utility functions, API services, and composables must declare an explicit return type.
+
+---
+
+## 4. Import Conventions & Ordering
+
+Organize imports into 4 distinct blocks separated by a single newline:
+1. **Third-party / Node built-in packages** (`vue`, `vue-router`, `@tanstack/vue-query`, `matrix-js-sdk`)
+2. **Internal UI Components** (`@/components/ui/...`, `@/components/common/...`)
+3. **Application logic & composables** (`@/common/composables/...`, `@/services/...`)
+4. **Types, Utilities & Assets** (`@/common/libs/...`, `@/types/...`, styles)
+
+```ts
+// 1. External dependencies
+import { computed, ref } from "vue";
+import { useRoute } from "vue-router";
+import type { MatrixEvent } from "matrix-js-sdk";
+
+// 2. UI Components
+import { Button } from "@/components/ui/button";
+import VirtualList from "@/components/common/VirtualList.vue";
+
+// 3. Application logic & composables
+import { useChatRoom } from "@/common/composables/useChatRoom";
+
+// 4. Utils and types
+import { cn } from "@/common/libs/utils";
+import type { VirtualSnapshot } from "@/types/virtual-list";
 ```
 
-## Styling
+---
 
-- Prefer UnoCSS utilities for simple styling.
-- Use `src/styles/scss/global/variable.scss` for shared tokens.
-- Consume tokens via `bg-[--token]`, `text-[--token]`, `border-[--token]`.
+## 5. UI Primitives vs Domain Components
 
-## Routing
-
-Routes are defined in `src/router/index.ts`. Use platform detection for conditional rendering:
-
-```typescript
-{
-  path: '/settings',
-  component: () => import('@/views/settingsWindow/SettingsDialog.vue')
-}
-```
-
-## i18n
-
-Add new strings under `locales/` and reference via `t(...)`:
-
-```typescript
-import { useI18n } from 'vue-i18n'
-
-const { t } = useI18n()
-const label = t('settings.title')
-```
-
-## Naming Conventions
-
-| Type | Convention | Example |
-|------|------------|---------|
-| Components | PascalCase | `UserProfile.vue` |
-| Services | camelCase | `matrixClientService.ts` |
-| Stores | camelCase | `user.ts` |
-| Types | PascalCase | `UserInfo` |
-| Enums | PascalCase | `StoresEnum` |
-| Constants | UPPER_SNAKE_CASE | `API_BASE_URL` |
-| Private members | Underscore prefix | `_client` |
-
-## Error Handling
-
-```typescript
-async function handleSendMessage(): Promise<void> {
-  try {
-    loading.value = true
-    await matrixEventService.sendMessage(roomId.value, message.value)
-    message.value = ''
-  } catch (error) {
-    toast.error('发送失败，请稍后重试')
-    console.error('[ChatView] 发送消息错误:', error)
-  } finally {
-    loading.value = false
-  }
-}
-```
-
-## Common Hooks
-
-| Hook | Purpose |
-|------|---------|
-| `useLogin()` | Login flow |
-| `useMessage()` | Message handling |
-| `useChatMain()` | Chat view logic |
-| `useFileUploadQueue()` | File uploads |
-| `useDownload()` | File downloads |
-| `useNetworkStatus()` | Network state |
-| `useOnlineStatus()` | User presence |
-| `usePlatform()` | Platform detection |
+- **`src/components/ui/`**: 100% presentation-only primitives (Button, Input, Dialog). Must NEVER contain network calls or Matrix domain logic. Always export via barrel `index.ts` and merge classes via `cn` from `@/common/libs/utils`.
+- **`src/components/common/`**: Shared domain and layout components (e.g. `VirtualList.vue`, navbar, sidebar).
+- **`src/pages/`**: Route entrypoint views (e.g. `HomePage.vue`, `ChatPage.vue`). Must remain thin and consume reactive state from composables.

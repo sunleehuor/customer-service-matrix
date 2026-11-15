@@ -1,98 +1,112 @@
 ---
 name: hula-skill
-description: "HuLa project skill for Matrix ecosystem: backend (synapse-rust), SDK (matrix-js-sdk), frontend (hula). Use when user mentions hula, HuLa, synapse-rust, matrix-js-sdk, or requests changes in these repositories. Ask which scope (frontend/sdk/backend/fullstack) to enable."
+description: "Customer Service Matrix project skill: Vue 3, Vite, TypeScript strict, Tailwind CSS v4, Shadcn Vue (Reka UI), TanStack Vue Query, TanStack Virtual, and matrix-js-sdk integration. Use when working on customer-service-matrix, Matrix chat client, components, composables, services, or following project coding style and architecture."
 ---
 
-# HuLa Skill
+# Customer Service Matrix Engineering Skill
 
-## Overview
+## 1. Project Overview
 
-Enable consistent changes across the HuLa Matrix ecosystem with repo-specific conventions and resources.
+This skill guides development on the **Matrix Customer Service** application (`customer-service-matrix` / `matrix-customer-service-vite`). It enforces strict architectural layering, TypeScript standards, Prettier/ESLint rules, Matrix SDK lifecycle patterns, and safety verification protocols.
 
-**Three-Project Architecture:**
+### Key Tech Stack
+- **Framework**: Vue 3 (v3.5+ `<script setup lang="ts">`)
+- **Build Tool**: Vite 8
+- **Language**: TypeScript 6 (`vue-tsc -b` strict type safety)
+- **Styling**: Tailwind CSS v4 (`@tailwindcss/vite` + OKLCH design tokens)
+- **UI Primitives**: Shadcn Vue (Reka UI) in `@/components/ui/`
+- **Virtualization**: TanStack Vue Virtual v3 for high-performance chat feeds
+- **Server State**: TanStack Vue Query v5 for caching and async data fetching
+- **Matrix Integration**: `matrix-js-sdk` v45 client singleton in `@/common/libs/matrix/`
+- **Routing & i18n**: Vue Router 5 (Web history), Vue I18n 11
 
-| Project | Path | Tech Stack | Purpose |
-|---------|------|------------|---------|
-| **synapse-rust** | `/synapse-rust` | Rust + Axum + SQLx + Redis | Matrix Homeserver |
-| **matrix-js-sdk** | `/matrix-js-sdk` | TypeScript + Node.js | Matrix Client SDK |
-| **hula** | `/hula` | Vue 3 + Tauri + Pinia | Cross-platform Client |
+---
 
-## Activation Gate
+## 2. Clean 4-Layer Architecture (Separation of Concerns)
 
-Ask which scope to enable:
-- **frontend**: hula Vue 3 + Tauri application
-- **sdk**: matrix-js-sdk TypeScript SDK
-- **backend**: synapse-rust Rust Homeserver
-- **fullstack**: Cross-project changes
+All business logic, API requests, state mutations, and custom functions must live **OUTSIDE** the UI layer:
 
-Confirm platform (desktop/mobile for frontend), target area, and constraints before editing.
+| Layer | Directory | Can Contain | CANNOT Contain |
+| :--- | :--- | :--- | :--- |
+| **1. UI (Presentation)** | `src/pages/`, `src/components/` | Templates, HTML, Tailwind classes, event bindings, consuming composables | `axios.get()`, `fetch()`, direct matrix event listeners, complex data formatting |
+| **2. Composables** | `src/common/composables/` | `useQuery()`, `useMutation()`, `ref()`, `computed()`, Matrix listener lifecycle | Raw HTML templates, scoped CSS styles |
+| **3. Services** | `src/services/` | Async API functions, DTO typings, TanStack Query key factories | Vue reactivity (`ref`, `computed`), template code |
+| **4. Libs & Utils** | `src/common/libs/` | Pure helpers (`cn`), client singletons (`api.ts`, `matrix/`), routing, i18n | Domain business logic, UI state |
 
-## Workflow
+---
 
-1. Identify scope and relevant project(s).
-2. Locate similar code paths and follow existing patterns.
-3. Apply changes using repo conventions and available templates.
-4. Update related layers when needed.
-5. Run checks/tests only when requested.
+## 3. Coding Style & Formatting Rules
 
-## Scope Routing
+- **SFC Structure**: `<script setup lang="ts">` first, `<template>` second, `<style scoped>` third (prefer Tailwind utilities).
+- **Prettier Settings** (`.prettierrc`):
+  - `semi: true` (Semicolons required)
+  - `singleQuote: false` (**Double quotes `"..."` required**)
+  - `tabWidth: 2`, `useTabs: false` (**2 spaces indentation, tabs forbidden**)
+  - `vueIndentScriptAndStyle: true` (**2-space indentation inside `<script>` and `<style>` in `.vue` files**)
+  - `trailingComma: "all"`, `printWidth: 80`, `arrowParens: "always"`
+- **TypeScript**:
+  - Zero `any` allowed (use `unknown` with narrowing or typed interfaces).
+  - Use `interface` for data objects/DTOs/props; `type` for unions/primitives.
+  - Explicit return types required for all public functions, services, and composables.
+- **Import Ordering** (4 distinct blocks separated by newlines):
+  1. Third-party packages (`vue`, `vue-router`, `@tanstack/vue-query`, `matrix-js-sdk`)
+  2. Internal UI components (`@/components/ui/...`, `@/components/common/...`)
+  3. Application logic & composables (`@/common/composables/...`, `@/services/...`)
+  4. Types, utilities & assets (`@/common/libs/...`, `@/types/...`)
+- **Naming Conventions**:
+  - Components: PascalCase, multi-word (e.g. `HomePage.vue`, `ChatPage.vue`, `VirtualList.vue`).
+  - Composables: camelCase with `use` prefix (e.g. `useChatRoom.ts`, `usePostsQuery.ts`).
+  - Services: kebab-case with `.service.ts` (e.g. `post.service.ts`).
+  - Types/Utilities: kebab-case (e.g. `virtual-list.ts`, `utils.ts`).
 
-### Frontend (hula)
+---
 
-Read `references/frontend.md` and `references/overview.md`.
-Use templates in `assets/templates/`:
-- `view-desktop.vue` - Desktop views
-- `view-mobile.vue` - Mobile views
-- `pinia-store.ts` - Pinia stores
+## 4. UI Primitives & Design System (`src/components/ui/`)
 
-Key directories:
-- `src/views/` - Desktop views
-- `src/mobile/views/` - Mobile views
-- `src/services/matrix/` - Matrix SDK wrappers
-- `src/stores/` - Pinia state management
+- `@/components/ui/` is strictly for headless presentation-only primitives (Button, Input, Dialog).
+- Components must NEVER contain API calls, business logic, or Matrix event bindings.
+- Always use the centralized `cn` class merger: `import { cn } from "@/common/libs/utils";`.
+- Maintain barrel exports in `index.ts` for every component primitive folder.
+- Place shared layout and domain components under `src/components/common/`.
 
-### SDK (matrix-js-sdk)
+---
 
-Read `references/sdk.md` and `references/overview.md`.
-Follow BaseManager pattern for new managers.
+## 5. Matrix JS SDK Client Usage
 
-Key directories:
-- `src/common/BaseManager.ts` - Base class for managers
-- `src/friend/` - Friend system
-- `src/room/` - Room management
-- `src/crypto/` - Encryption
-- `src/webrtc/` - VoIP
+- Matrix client lifecycle is managed in `src/common/libs/matrix/matrix.ts` via `initialize(config)` and `stop()`.
+- Room queries are in `matrix-room.ts` (`getRoomById`, `getRooms`, `autoJoinRoom`).
+- Timeline & pagination queries are in `matrix-message.ts` (`getRoomTimelineEvents`, `paginateRoomTimeline`).
+- Components consume Matrix data through reactive composables (e.g. `useChatRoom.ts`) that register and clean up listeners (`RoomEvent.Timeline`).
+- **NEVER** hardcode Matrix tokens, passwords, or credentials in source code. Keep credentials in `.env` (ignored by git).
 
-### Backend (synapse-rust)
+---
 
-Read `references/backend.md` and `references/overview.md`.
+## 6. Templates & Utilities
 
-Key directories:
-- `src/auth/` - Authentication
-- `src/e2ee/` - End-to-end encryption
-- `src/services/` - Business services
-- `src/storage/` - Database layer
-- `src/web/routes/` - HTTP routes
-- `src/federation/` - Federation protocol
+Templates are provided in `assets/templates/`:
+- `page-view.vue`: Standard Vue 3 page SFC consuming composables and UI primitives.
+- `service.ts`: Pure async HTTP service with TanStack query key factory.
+- `composable-query.ts`: Composable hook wrapping TanStack `useQuery`.
+- `matrix-helper.ts`: Typed Matrix client helper function.
+- `ui-primitive.vue`: Shadcn UI atomic primitive with standard `cn` merging.
 
-### Fullstack
+Layout inspection script:
+- `scripts/hula_summary.py`: Run `python3 .agents/skills/hula-skill/scripts/hula_summary.py` to inspect project architecture counts.
 
-Read `references/fullstack.md` plus relevant scope references.
-Trace data flow across all three projects.
+---
 
-## Scripts
+## 7. Mandatory 3-Step Verification Protocol & Safety Policies
 
-- `scripts/hula_summary.py` - Quick repo context
-- `scripts/hula_tauri_map.py` - Tauri commands mapping
+> [!IMPORTANT]
+> **No Autonomous Commits**: AI agents must **NEVER** run `git commit` or `git push` autonomously without explicit user permission. All changes must remain in the working tree for human review.
+> 
+> Whenever a task, feature, or fix is finished, you must run the 3-step verification protocol and report status **with each emoji one by one**:
+> ```
+> 1. 🔍 Review: [Passed / Findings]
+> 2. 🎨 Style:  [Passed / Format status]
+> 3. 🏗️ Build:  [Passed / Compile status]
+> ```
 
-## References
-
-| File | Purpose |
-|------|---------|
-| `references/overview.md` | Stack, directories, aliases, global conventions |
-| `references/frontend.md` | hula Vue 3 + Tauri guide |
-| `references/sdk.md` | matrix-js-sdk TypeScript guide |
-| `references/backend.md` | synapse-rust Rust guide |
-| `references/fullstack.md` | Cross-project integration guide |
-| `references/checklists.md` | Per-scope checklists |
-| `references/build-release.md` | Build and release commands |
+1. 🔍 **Review**: Run `git status` and `git diff`. Verify separation of concerns (custom functions outside UI). Ensure no secrets, tokens, stray `console.log`, or dead code exist.
+2. 🎨 **Style**: Run `pnpm run format:check` and `pnpm run eslint` (or `npm.cmd run ...` on Windows). Ensure 100% Prettier compliance and 0 ESLint errors/warnings.
+3. 🏗️ **Build**: Run `pnpm run build` (`vue-tsc -b && vite build`). Ensure 0 TypeScript errors and clean bundling.

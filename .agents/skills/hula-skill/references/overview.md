@@ -1,216 +1,116 @@
-# HuLa Ecosystem Overview
+# Project Architecture & Ecosystem Overview
 
-## Architecture
+**Project**: Matrix Customer Service (`matrix-customer-service-vite` / `customer-service-matrix`)  
+**Standard**: Vue 3 + TypeScript Strict Engineering Guidelines
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         hula (Frontend)                          │
-│                    Vue 3 + Tauri + Pinia                         │
-│              Desktop (Naive UI) / Mobile (Vant)                  │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │ Matrix Client-Server API
-                            ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    matrix-js-sdk (SDK)                           │
-│                  TypeScript + Node.js                            │
-│         Matrix Protocol Implementation + Managers                │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │ Matrix Client-Server API
-                            ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                   synapse-rust (Backend)                         │
-│                 Rust + Axum + SQLx + Redis                       │
-│                    Matrix Homeserver                             │
-└─────────────────────────────────────────────────────────────────┘
-```
+---
 
-## Project Stacks
+## 1. Clean 4-Layer Architecture
 
-### synapse-rust (Backend)
-
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| Rust | 2021 Edition | Backend language |
-| Axum | ^0.8 | Web framework |
-| SQLx | ^0.8 | Database ORM (PostgreSQL) |
-| Tokio | ^1.49 | Async runtime |
-| Redis | ^0.27 | Cache layer |
-| Argon2 | ^0.5 | Password hashing |
-| AES-GCM / ChaCha20Poly1305 | ^0.10 | End-to-end encryption |
-
-### matrix-js-sdk (SDK)
-
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| TypeScript | ^5.0 | SDK language |
-| Node.js | >=22.0.0 | Runtime |
-| Vitest | - | Unit testing |
-| Babel | - | Transpilation |
-
-### hula (Frontend)
-
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| Vue | ^3.5.0 | Frontend framework |
-| TypeScript | ^5.8.0 | Type system |
-| Vite | ^7.0.0 | Build tool |
-| Tauri | ^2.9.0 | Cross-platform container |
-| Pinia | ^3.0.0 | State management |
-| matrix-js-sdk | ^37.0.0 | Matrix protocol SDK |
-| Naive UI | - | Desktop components |
-| Vant | - | Mobile components |
-| UnoCSS | - | Atomic CSS |
-
-## Directory Layout
-
-### synapse-rust
+This project enforces strict separation of concerns across 4 discrete layers:
 
 ```
-synapse-rust/
+┌────────────────────────────────────────────────────────┐
+│ 1. Presentation Layer (UI Only)                        │
+│    - src/pages/*.vue (Route entrypoints)               │
+│    - src/components/ui/ (Atomic headless primitives)   │
+│    - src/components/common/ (Shared layout/domain)     │
+└──────────────────────────┬─────────────────────────────┘
+                           │ Consumes reactive state & actions
+                           ▼
+┌────────────────────────────────────────────────────────┐
+│ 2. Reactive Application Layer (Composables)           │
+│    - src/common/composables/use*.ts                    │
+│    - TanStack Query hooks, reactive chat/matrix state  │
+└──────────────────────────┬─────────────────────────────┘
+                           │ Calls typed services & matrix libs
+                           ▼
+┌────────────────────────────────────────────────────────┐
+│ 3. Service & API Layer (Pure Async Business Functions) │
+│    - src/services/*.service.ts                         │
+│    - Pure functions executing HTTP requests            │
+│    - TanStack Query key factories                      │
+└──────────────────────────┬─────────────────────────────┘
+                           │ Calls HTTP singleton & pure utils
+                           ▼
+┌────────────────────────────────────────────────────────┐
+│ 4. Infrastructure & Utilities                          │
+│    - src/common/libs/api.ts (Axios client singleton)   │
+│    - src/common/libs/matrix/ (Matrix client helpers)   │
+│    - src/common/libs/utils.ts (cn class merger)        │
+│    - src/common/libs/router.ts, i18n.ts, env.ts        │
+└────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 2. Tech Stack
+
+| Technology | Version | Purpose |
+| :--- | :--- | :--- |
+| **Vue** | ^3.5.44 | Frontend reactive framework (`<script setup lang="ts">`) |
+| **Vite** | ^8.3.6 | Next-generation build tool & dev server |
+| **TypeScript** | ~6.0.3 | Strict type checking with `vue-tsc` |
+| **Tailwind CSS** | ^4.3.5 | Utility-first CSS (`@tailwindcss/vite` + OKLCH design tokens) |
+| **Shadcn Vue / Reka UI** | ^2.11.0 | Accessible headless atomic component primitives |
+| **TanStack Vue Query** | ^5.107.1 | Asynchronous server-state management & caching |
+| **TanStack Vue Virtual** | ^3.13.52 | 60FPS list virtualization for chat message feeds |
+| **matrix-js-sdk** | ^45.1.0 | Matrix client protocol integration |
+| **Axios** | ^1.21.1 | HTTP client singleton |
+| **Vue Router** | ^5.5.0 | Web history routing |
+| **Vue I18n** | ^11.4.19 | Internationalization |
+| **Husky** | ^9.1.7 | Git pre-commit enforcement gate |
+| **ESLint + Prettier** | Flat Config | Automated linting & code formatting |
+
+---
+
+## 3. Directory Layout & Conventions
+
+```text
+customer-service-matrix/
+├── .agents/skills/            # Agent skills (hula-skill, shadcn, tailwindcss, etc.)
+├── .husky/                    # Git pre-commit hooks
+├── docs/                      # Authoritative architectural documentation
+│   ├── README.md
+│   ├── coding-style.md
+│   ├── separation-of-concerns.md
+│   ├── shadcn-and-ui-structure.md
+│   ├── git-workflow-and-rules.md
+│   └── code-review.md
 ├── src/
-│   ├── auth/           # Authentication module
-│   ├── cache/          # Cache layer (Redis)
-│   ├── common/         # Common utilities
-│   ├── e2ee/           # End-to-end encryption
-│   │   ├── crypto/     # Cryptographic primitives
-│   │   ├── olm/        # Olm protocol
-│   │   ├── megolm/     # Megolm protocol
-│   │   ├── cross_signing/  # Cross-signing
-│   │   ├── backup/     # Key backup
-│   │   └── ssss/       # Secret storage
-│   ├── federation/     # Federation protocol
-│   │   └── friend/     # Friend federation
-│   ├── services/       # Business services
-│   ├── storage/        # Database layer
-│   ├── web/            # HTTP routes
-│   │   └── routes/     # Route handlers
-│   ├── worker/         # Worker management
-│   └── tasks/          # Background tasks
-└── Cargo.toml
-```
-
-### matrix-js-sdk
-
-```
-matrix-js-sdk/
-├── src/
+│   ├── assets/                # Static image/media assets
 │   ├── common/
-│   │   └── BaseManager.ts      # Base class for managers
-│   ├── friend/                 # Friend system
-│   ├── room/                   # Room management
-│   ├── account/                # Account management
-│   ├── auth/                   # Authentication
-│   ├── crypto/                 # Encryption
-│   ├── rust-crypto/            # Rust crypto backend
-│   ├── webrtc/                 # VoIP/WebRTC
-│   ├── matrixrtc/              # Matrix RTC
-│   ├── media/                  # Media handling
-│   ├── messaging/              # Messaging
-│   ├── push/                   # Push notifications
-│   ├── search/                 # Search
-│   ├── space/                  # Spaces
-│   ├── thread/                 # Threads
-│   ├── timeline/               # Timeline
-│   ├── user/                   # User management
-│   ├── voice/                  # Voice messages
-│   ├── moderation/             # Moderation
-│   ├── notification/           # Notifications
-│   ├── presence/               # Presence
-│   ├── profile/                # Profile
-│   ├── receipt/                # Read receipts
-│   ├── retention/              # Retention
-│   ├── quota/                  # Quota management
-│   ├── dm/                     # Direct messages
-│   ├── federation/             # Federation blacklist
-│   ├── models/                 # Data models
-│   ├── http-api/               # HTTP API layer
-│   └── store/                  # Storage
-└── package.json
+│   │   ├── composables/       # Layer 2: Reactive composables (useChatRoom.ts, usePostsQuery.ts)
+│   │   ├── constants/         # Global constants (app.constant.ts)
+│   │   ├── libs/              # Layer 4: Infrastructure (api.ts, env.ts, i18n.ts, router.ts, utils.ts)
+│   │   │   └── matrix/        # Matrix protocol helpers (matrix.ts, matrix-message.ts, matrix-room.ts)
+│   │   ├── locales/           # Translation message files (en.ts, zh-Hans.ts)
+│   │   └── providers/         # Global providers (ProviderWrapper.vue, MatrixClientProvider.vue)
+│   ├── components/
+│   │   ├── ui/                # Layer 1: Shadcn atomic primitives (Button, Input, Dialog)
+│   │   └── common/            # Layer 1: Shared domain components (VirtualList.vue, HeaderNavbar.vue)
+│   ├── pages/                 # Layer 1: Route entrypoint views (HomePage.vue, ChatPage.vue)
+│   ├── services/              # Layer 3: Pure async HTTP functions & query keys (post.service.ts)
+│   ├── types/                 # Shared TypeScript interfaces & types (virtual-list.ts)
+│   ├── App.vue                # Root application component
+│   ├── main.ts                # Application boot entrypoint
+│   └── style.css              # Tailwind v4 theme tokens & styles
+├── .env.example               # Safe environment variable placeholders (NO secrets)
+├── components.json            # Shadcn configuration & path aliases
+├── eslint.config.ts           # ESLint 9 Flat Config
+└── package.json               # Dependencies and scripts
 ```
 
-### hula
+---
 
-```
-hula/
-├── src/                        # Frontend source
-│   ├── views/                  # Desktop views
-│   ├── mobile/views/           # Mobile views
-│   ├── components/             # Shared components
-│   ├── mobile/components/      # Mobile components
-│   ├── layout/                 # Desktop layouts
-│   ├── mobile/layout/          # Mobile layouts
-│   ├── services/
-│   │   ├── matrix/             # Matrix SDK wrappers
-│   │   ├── offline/            # Offline support
-│   │   └── openclaw/           # OpenClaw integration
-│   ├── stores/                 # Pinia stores
-│   ├── hooks/                  # Composables
-│   ├── router/                 # Vue Router
-│   ├── utils/                  # Utilities
-│   ├── types/                  # TypeScript types
-│   └── enums/                  # Enums
-├── src-tauri/                  # Tauri backend (if used)
-├── locales/                    # i18n translations
-└── package.json
-```
+## 4. Configured Path Aliases
 
-## Aliases (hula)
-
-- `@/` → `src/`
-- `#/` → `src/mobile/`
-- `~/` → repo root
-
-## Conventions
-
-### General
-
-- Use 2-space indent and LF line endings.
-- Prefer TypeScript/Rust strict mode.
-- Document public APIs with JSDoc/doc comments.
-- Do not add secrets to tracked files; use `.env.local`.
-
-### Frontend (hula)
-
-- Use `<script setup>` and Composition API.
-- Prefer UnoCSS utilities; use SCSS variables for tokens.
-- Use `storeToRefs` when destructuring Pinia state.
-- Follow project_rules.md for naming conventions.
-
-### SDK (matrix-js-sdk)
-
-- Extend `BaseManager` for new managers.
-- Use TypedEventEmitter for events.
-- Follow existing manager patterns.
-
-### Backend (synapse-rust)
-
-- Use `ServiceContainer` for dependency injection.
-- Follow module structure: `storage` → `service` → `routes`.
-- Use `#[derive(Clone)]` for shared state.
-
-## Common Files
-
-### hula
-
-| File | Purpose |
-|------|---------|
-| `src/router/index.ts` | Route definitions |
-| `src/services/matrix/index.ts` | Matrix service exports |
-| `src/stores/matrix.ts` | Matrix state store |
-| `src/enums/index.ts` | Enums including `TauriCommand` |
-
-### matrix-js-sdk
-
-| File | Purpose |
-|------|---------|
-| `src/client.ts` | Main MatrixClient class |
-| `src/common/BaseManager.ts` | Manager base class |
-| `src/index.ts` | Public exports |
-
-### synapse-rust
-
-| File | Purpose |
-|------|---------|
-| `src/lib.rs` | Module exports |
-| `src/services/mod.rs` | ServiceContainer definition |
-| `src/web/routes/mod.rs` | Route registration |
+Always use path aliases rather than deep relative paths:
+- `@/` -> `src/`
+- `@/components` -> `src/components`
+- `@/components/ui` -> `src/components/ui`
+- `@/components/common` -> `src/components/common`
+- `@/common/composables` -> `src/common/composables`
+- `@/common/libs` -> `src/common/libs`
+- `@/services` -> `src/services`
+- `@/types` -> `src/types`
